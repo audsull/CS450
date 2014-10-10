@@ -18,16 +18,7 @@ const int NumPoints = 25;
 
 void init()
 {
-//    vec2 square_verticies[] = {
-//      vec2(-0.25, -0.25),
-//      vec2(-0.25, 0.25),
-//      vec2(0.25,0.25),
-//      vec2(0.25, 0.25),
-//      vec2(-0.25,-0.25),
-//      vec2(0.25, -0.25)
-//    };
-
-    vec2 pent_verticies[] = {
+    vec2 verticies[] = {
         vec2(-0.7, -1.0),
         vec2(-1.0, 0.3),
         vec2(0.0, 1.0),
@@ -36,11 +27,24 @@ void init()
         vec2(1.0, 0.3),
         vec2(-0.7, -1.0),
         vec2(1.0, 0.3),
-        vec2(0.7, -1.0)
+        vec2(0.7, -1.0),
+        
+        vec2(-0.25, -0.25),
+        vec2(-0.25, 0.25),
+        vec2(0.25, 0.25),
+        vec2(0.25, 0.25),
+        vec2(-0.25, -0.25),
+        vec2(0.25, -0.25)
     };
     
-    vec3 colors[] = {
-        vec3(1.0, 0.0, 0.0)
+    vec4 colors[] = {
+        vec4(1.0, 0.0, 0.0, 1.0),
+        vec4(1.0, 0.0, 0.0, 1.0),
+        vec4(0.0, 1.0, 0.0, 1.0),
+        vec4(0.0, 0.0, 1.0, 1.0),
+        vec4(0.0, 0.0, 1.0, 1.0),
+        vec4(0.0, 0.0, 0.0, 1.0),
+        vec4(1.0, 0.0,0.0, 1.0)
     };
 
     GLuint vao[1];
@@ -50,8 +54,7 @@ void init()
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pent_verticies), pent_verticies, GL_STATIC_DRAW);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(square_verticies), square_verticies, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
 
     // Create and link the shaders into a program
     GLuint shaders = InitShader("vertshader.glsl", "fragshader.glsl");
@@ -86,7 +89,8 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Draw each object here
-    glDrawArrays(GL_TRIANGLES, 0, NumPoints);
+    glDrawArrays(GL_TRIANGLES, 0, 9);
+    glDrawArrays(GL_TRIANGLES, 9, 6);
 
     glFlush();
     glutSwapBuffers();
