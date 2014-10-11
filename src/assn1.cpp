@@ -15,7 +15,9 @@
 #include <stdio.h>
 
 // A global constant for the number of points that will be in our object.
-const int NumPoints = 24;
+const int NumPoints = 27;
+const int NumPointsDot = 28;
+const int NumPointsLine = 30;
 
 
 //----------------------------------------------------------------------------
@@ -44,12 +46,21 @@ void init(void)
         vec2(0.9, 0.2),
         vec2(0.6, -0.9),
         
+        vec2(-0.5, -0.5), //triangle
+        vec2(0.5, -0.5),
+        vec2(0.0, 0.5),
+        
         vec2(-0.25, -0.25), //square
         vec2(-0.25, 0.25),
         vec2(0.25, 0.25),
         vec2(0.25, 0.25),
         vec2(-0.25, -0.25),
-        vec2(0.25, -0.25)
+        vec2(0.25, -0.25),
+        
+        vec2(-0.15, 0.0), //point in the middle
+        
+        vec2(0.0, 1.0), //line
+        vec2(0.0, -1.0)
     };
     
     vec4 colors[] = {
@@ -73,12 +84,21 @@ void init(void)
         vec4(0.0, 0.0, 1.0, 1.0),
         vec4(0.0, 0.0, 1.0, 1.0),
         
+        vec4(1.0, 0.0, 0.0, 1.0), //triangle
+        vec4(0.0, 1.0, 0.0, 1.0),
+        vec4(0.0, 0.0, 1.0, 1.0),
+        
         vec4(1.0, 0.0, 0.0, 1.0), //square
         vec4(1.0, 0.0, 0.0, 1.0),
         vec4(1.0, 0.0, 0.0, 1.0),
         vec4(1.0, 0.0, 0.0, 1.0),
         vec4(1.0, 0.0, 0.0, 1.0),
-        vec4(1.0, 0.0, 0.0, 1.0)
+        vec4(1.0, 0.0, 0.0, 1.0),
+        
+        vec4(0.0, 0.0, 0.0, 1.0), //point in the middle
+        
+        vec4(0.0, 0.0, 0.0, 1.0), //line
+        vec4(0.0, 0.0, 0.0, 1.0)
     };
     
     
@@ -165,6 +185,8 @@ display(void)
     // Draw the points.  The parameters to the function are: the mode, the first
     // index, and the count.
     glDrawArrays(GL_TRIANGLES, 0, NumPoints);
+    glDrawArrays(GL_POINTS, NumPoints, NumPointsDot);
+    glDrawArrays(GL_LINES, NumPointsDot, NumPointsLine);
     glFlush();
     glutSwapBuffers();
 }
