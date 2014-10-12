@@ -1,6 +1,7 @@
-// SimpleProgram.cpp
+// assn1.cpp
 //
-// A simple 2D OpenGL program
+// Audrey Sullivan
+// Jilian LaFerte
 
 #define GL3_PROTOTYPES
 
@@ -14,7 +15,7 @@
 
 #include <stdio.h>
 
-// A global constant for the number of points that will be in our object.
+// A global constants for the different starting points for geometric shapes, lines, and points.
 const int NumPoints = 27;
 const int NumPointsDot = 28;
 const int NumPointsLine = 30;
@@ -23,8 +24,7 @@ const int NumPointsLine = 30;
 //----------------------------------------------------------------------------
 void init(void)
 {
-    // Specify the vertices for a rectangle.  The first and last vertex are
-    // duplicated to close the box.
+    //single array to hold all of the verticies for all of our objects
     vec2 vertices[] = {
         vec2(-0.7, -1.0), //pentagon1
         vec2(-1.0, 0.3),
@@ -63,6 +63,7 @@ void init(void)
         vec2(0.0, -1.0)
     };
     
+    //single array to hold all of the colors for all of our objects
     vec4 colors[] = {
         vec4(0.0, 1.0, 0.0, 1.0), //pentagon1
         vec4(0.0, 1.0, 0.0, 1.0),
@@ -113,7 +114,6 @@ void init(void)
     // Create and initialize buffer objects---that's the memory buffer that
     // will be on the card!  We'll need one for each array in this example
     GLuint buffer[2];
-    
     glGenBuffers(2, buffer);
     
     // Bind makes buffer[0] the active VBO
@@ -123,8 +123,6 @@ void init(void)
     // tell it the type of buffer object, the size of the data in bytes, the
     // pointer for the data itself, and a hint for how we intend to use it.
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    
     
     //Color buffer setup
     // Bind makes buffer[1] the active buffer now
@@ -166,8 +164,8 @@ void init(void)
     //Now let's work on the color buffer
     glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
     loc = glGetAttribLocation(program, "vColor");
-    
     glEnableVertexAttribArray(loc);
+    
     //Note offset is still 0 because it's a second buffer, the color buffer in this case.
     glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     
@@ -196,7 +194,6 @@ void
 keyboard(unsigned char key, int x, int y)
 {
     switch (key) {
-            
             // Quit when ESC is pressed
         case 27:
             exit(EXIT_SUCCESS);
