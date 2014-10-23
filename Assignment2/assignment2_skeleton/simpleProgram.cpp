@@ -5,7 +5,7 @@
 // macro definitions.
 #include "Angel.h"
 #include <stdio.h>
-
+#include "glm/glm/glm.hpp"
 #ifdef __APPLE__
 #  include <OpenGL/gl3.h>
 #endif
@@ -17,9 +17,19 @@ const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
 GLuint  model_view;  // model-view matrix uniform shader variable location
 GLuint  projection; // projection matrix uniform shader variable location
 
-
 point4 points[NumVertices];
 vec4   normals[NumVertices];
+
+//struct ParserState
+//{
+//    vecotr<vec3> verticies;
+//    vector<vec3> normals;
+//    vector<int> indexes;
+//    
+//    FILE* fp;
+//    int line;
+//    char lookahead[256];
+//};
 
 // Vertices of a unit cube centered at origin, sides aligned with axes
 point4 vertices[8] = {
@@ -91,9 +101,11 @@ init()
     glBindBuffer( GL_ARRAY_BUFFER, buffer );
     glBufferData( GL_ARRAY_BUFFER, sizeof(points) + sizeof(normals),
 		  NULL, GL_STATIC_DRAW );
-    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(points), points );
-    glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(normals), normals );
+//    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(points), points );
+//    glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(normals), normals );
 
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+    
     // Load shaders and use the resulting shader program
     GLuint program = InitShader( "vshader.glsl", "fshader.glsl" );
     glUseProgram( program );
@@ -146,8 +158,8 @@ init()
 
 
 
-    mat4 p = Perspective(45, 1.0, 0.1, 10.0);
-    point4  eye( 1.0, 1.0, 2.0, 1.0);
+    mat4 p = Perspective(90.0, 1.0, 0.1, 4.0);
+    point4  eye( 0.0, 0.0, 2.0, 1.0);
     point4  at( 0.0, 0.0, 0.0, 1.0 );
     vec4    up( 0.0, 1.0, 0.0, 0.0 );
 
@@ -186,15 +198,6 @@ keyboard( unsigned char key, int x, int y )
 }
 
 //----------------------------------------------------------------------------
-
-
-
-/*
- *  simple.c
- *  This program draws a red rectangle on a white background.
- *
- * Still missing the machinery to move to 3D
- */
 
 /* glut.h includes gl.h and glu.h*/
 
