@@ -5,82 +5,81 @@
 // macro definitions.
 #include "Angel.h"
 #include <stdio.h>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <iostream>
 #include "glm/glm/glm.hpp"
+#include "objloader.hpp"
+#include "objloader.cpp"
 #ifdef __APPLE__
 #  include <OpenGL/gl3.h>
 #endif
 
 typedef Angel::vec4  color4;
 typedef Angel::vec4  point4;
-const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
-
+//const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
+//const int NumVertices = 0;
 GLuint  model_view;  // model-view matrix uniform shader variable location
 GLuint  projection; // projection matrix uniform shader variable location
 
-point4 points[NumVertices];
-vec4   normals[NumVertices];
-
-//struct ParserState
-//{
-//    vecotr<vec3> verticies;
-//    vector<vec3> normals;
-//    vector<int> indexes;
-//    
-//    FILE* fp;
-//    int line;
-//    char lookahead[256];
-//};
+//point4 points[NumVertices];
+//vec4   normals[NumVertices];
 
 // Vertices of a unit cube centered at origin, sides aligned with axes
-point4 vertices[8] = {
-    point4( -0.5, -0.5,  0.5, 1.0 ),
-    point4( -0.5,  0.5,  0.5, 1.0 ),
-    point4(  0.5,  0.5,  0.5, 1.0 ),
-    point4(  0.5, -0.5,  0.5, 1.0 ),
-    point4( -0.5, -0.5, -0.5, 1.0 ),
-    point4( -0.5,  0.5, -0.5, 1.0 ),
-    point4(  0.5,  0.5, -0.5, 1.0 ),
-    point4(  0.5, -0.5, -0.5, 1.0 )
-};
+//point4 vertices[8] = {
+//    point4( -0.5, -0.5,  0.5, 1.0 ),
+//    point4( -0.5,  0.5,  0.5, 1.0 ),
+//    point4(  0.5,  0.5,  0.5, 1.0 ),
+//    point4(  0.5, -0.5,  0.5, 1.0 ),
+//    point4( -0.5, -0.5, -0.5, 1.0 ),
+//    point4( -0.5,  0.5, -0.5, 1.0 ),
+//    point4(  0.5,  0.5, -0.5, 1.0 ),
+//    point4(  0.5, -0.5, -0.5, 1.0 )
+//};
+
+std::vector<glm::vec3> vertices;
+std::vector<glm::vec3> normals;
+
 
 
 //----------------------------------------------------------------------------
 
 // quad generates two triangles for each face and assigns colors
 //    to the vertices.  Notice we keep the relative ordering when constructing the tris
-int Index = 0;
-void
-quad( int a, int b, int c, int d )
-{
-
-
-  vec4 u = vertices[b] - vertices[a];
-  vec4 v = vertices[c] - vertices[b];
-
-  vec4 normal = normalize( cross(u, v) );
-  normal[3] = 0.0;
-
-  normals[Index] = normal; points[Index] = vertices[a]; Index++;
-  normals[Index] = normal; points[Index] = vertices[b]; Index++;
-  normals[Index] = normal; points[Index] = vertices[c]; Index++;
-  normals[Index] = normal; points[Index] = vertices[a]; Index++;
-  normals[Index] = normal; points[Index] = vertices[c]; Index++;
-  normals[Index] = normal; points[Index] = vertices[d]; Index++;
-}
+//int Index = 0;
+//void
+//quad( int a, int b, int c, int d )
+//{
+//
+//
+//  vec4 u = vertices[b] - vertices[a];
+//  vec4 v = vertices[c] - vertices[b];
+//
+//  vec4 normal = normalize( cross(u, v) );
+//  normal[3] = 0.0;
+//
+//  normals[Index] = normal; points[Index] = vertices[a]; Index++;
+//  normals[Index] = normal; points[Index] = vertices[b]; Index++;
+//  normals[Index] = normal; points[Index] = vertices[c]; Index++;
+//  normals[Index] = normal; points[Index] = vertices[a]; Index++;
+//  normals[Index] = normal; points[Index] = vertices[c]; Index++;
+//  normals[Index] = normal; points[Index] = vertices[d]; Index++;
+//}
 
 //----------------------------------------------------------------------------
 
 // generate 12 triangles: 36 vertices and 36 colors
-void
-colorcube()
-{
-  quad( 4, 5, 6, 7 );
-  quad( 5, 4, 0, 1 );
-  quad( 1, 0, 3, 2 );
-  quad( 2, 3, 7, 6 );
-  quad( 3, 0, 4, 7 );
-  quad( 6, 5, 1, 2 );
-}
+//void
+//colorcube()
+//{
+//  quad( 4, 5, 6, 7 );
+//  quad( 5, 4, 0, 1 );
+//  quad( 1, 0, 3, 2 );
+//  quad( 2, 3, 7, 6 );
+//  quad( 3, 0, 4, 7 );
+//  quad( 6, 5, 1, 2 );
+//}
 
 //----------------------------------------------------------------------------
 
@@ -88,7 +87,9 @@ colorcube()
 void
 init()
 {
-    colorcube();
+    bool res = loadOBJ("../sphere42NS.obj", vertices, normals);
+    //NumVertices = vertices.size();
+    //colorcube();
 
     // Create a vertex array object
     GLuint vao;
@@ -99,7 +100,7 @@ init()
     GLuint buffer;
     glGenBuffers( 1, &buffer );
     glBindBuffer( GL_ARRAY_BUFFER, buffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof(points) + sizeof(normals),
+    glBufferData( GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(normals),
 		  NULL, GL_STATIC_DRAW );
 //    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(points), points );
 //    glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(normals), normals );
@@ -119,7 +120,7 @@ init()
     GLuint vNormal = glGetAttribLocation( program, "vNormal" );
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0,
-			   BUFFER_OFFSET(sizeof(points)) );
+			   BUFFER_OFFSET(sizeof(vertices)) );
 
 
     // Initialize shader lighting parameters
@@ -180,7 +181,7 @@ void
 display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+    glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
     glutSwapBuffers();
 }
 

@@ -141,17 +141,18 @@ bool loadAssImp(
 
 #endif
 
-int main() {
-    int i = 0;
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> normals;
-    bool res = loadOBJ("../sphere42NS.obj", vertices, normals);
-    for(i=0; i < vertices.size(); i++) {
-        std::cout << "{"
-        << vertices[i].x << " " << vertices[i].y << " " << vertices[i].z
-        << "}";
-    }
-}
+//int main() {
+//    int i = 0;
+//    std::vector<glm::vec3> vertices;
+//    std::vector<glm::vec3> normals;
+//    bool res = loadOBJ("../bunnyNS.obj", vertices, normals);
+//    std::cout << vertices.size();
+//    for(i=0; i < vertices.size(); i++) {
+//        std::cout << "{"
+//        << vertices[i].x << " " << vertices[i].y << " " << vertices[i].z
+//        << "}";
+//    }
+//}
 
 
 //put in verticies
