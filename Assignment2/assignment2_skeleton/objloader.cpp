@@ -3,14 +3,17 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-
+#define GL3_PROTOTYPES
 #include "glm/glm/glm.hpp"
+#include "glm/glm/gtc/matrix_transform.hpp"
 #include "objloader.hpp"
+
+using glm::vec4;
 
 bool loadOBJ(
              const char * path,
-             std::vector<glm::vec3> & out_vertices,
-             std::vector<glm::vec3> & out_normals
+             std::vector<glm::vec4> & out_vertices,
+             std::vector<glm::vec4> & out_normals
              ){
     printf("Loading OBJ file %s...\n", path);
     
@@ -74,8 +77,10 @@ bool loadOBJ(
         unsigned int normalIndex = normalIndices[i];
         
         // Get the attributes thanks to the index
-        glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
-        glm::vec3 normal = temp_normals[ normalIndex-1 ];
+        glm::vec4 vertex = glm::vec4(temp_vertices[ vertexIndex-1 ], 1.0);
+        glm::vec4 normal = glm::vec4(temp_normals[ normalIndex-1 ], 0.0);
+        
+        
         
         // Put the attributes in buffers
         out_vertices.push_back(vertex);
@@ -86,65 +91,10 @@ bool loadOBJ(
     return true;
 }
 
-
-#ifdef USE_ASSIMP // don't use this #define, it's only for me (it AssImp fails to compile on your machine, at least all the other tutorials still work)
-
-// Include AssImp
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
-
-bool loadAssImp(
-                const char * path,
-                std::vector<unsigned short> & indices,
-                std::vector<glm::vec3> & vertices,
-                std::vector<glm::vec3> & normals
-                ){
-    
-    Assimp::Importer importer;
-    
-    const aiScene* scene = importer.ReadFile(path, 0/*aiProcess_JoinIdenticalVertices | aiProcess_SortByPType*/);
-    if( !scene) {
-        fprintf( stderr, importer.GetErrorString());
-        getchar();
-        return false;
-    }
-    const aiMesh* mesh = scene->mMeshes[0]; // In this simple example code we always use the 1rst mesh (in OBJ files there is often only one anyway)
-    
-    // Fill vertices positions
-    vertices.reserve(mesh->mNumVertices);
-    for(unsigned int i=0; i<mesh->mNumVertices; i++){
-        aiVector3D pos = mesh->mVertices[i];
-        vertices.push_back(glm::vec3(pos.x, pos.y, pos.z));
-    }
-    
-    // Fill vertices normals
-    normals.reserve(mesh->mNumVertices);
-    for(unsigned int i=0; i<mesh->mNumVertices; i++){
-        aiVector3D n = mesh->mNormals[i];
-        normals.push_back(glm::vec3(n.x, n.y, n.z));
-    }
-    
-    
-    // Fill face indices
-    indices.reserve(3*mesh->mNumFaces);
-    for (unsigned int i=0; i<mesh->mNumFaces; i++){
-        // Assume the model has only triangles.
-        indices.push_back(mesh->mFaces[i].mIndices[0]);
-        indices.push_back(mesh->mFaces[i].mIndices[1]);
-        indices.push_back(mesh->mFaces[i].mIndices[2]);
-    }
-    
-    // The "scene" pointer will be deleted automatically by "importer"
-    
-}
-
-#endif
-
 //int main() {
 //    int i = 0;
-//    std::vector<glm::vec3> vertices;
-//    std::vector<glm::vec3> normals;
+//    std::vector<glm::vec4> vertices;
+//    std::vector<glm::vec4> normals;
 //    bool res = loadOBJ("../bunnyNS.obj", vertices, normals);
 //    std::cout << vertices.size();
 //    for(i=0; i < vertices.size(); i++) {
