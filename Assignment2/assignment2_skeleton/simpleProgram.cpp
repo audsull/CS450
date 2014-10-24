@@ -6,9 +6,13 @@
 #include "Angel.h"
 #include <stdio.h>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <iosfwd>
 #include <string>
 #include <cstring>
 #include <iostream>
+#include "glm/glm/gtc/matrix_transform.hpp"
 #include "glm/glm/glm.hpp"
 #include "objloader.hpp"
 #include "objloader.cpp"
@@ -16,70 +20,60 @@
 #  include <OpenGL/gl3.h>
 #endif
 
+
 typedef Angel::vec4  color4;
 typedef Angel::vec4  point4;
-//const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
-//const int NumVertices = 0;
+
 GLuint  model_view;  // model-view matrix uniform shader variable location
 GLuint  projection; // projection matrix uniform shader variable location
 
-//point4 points[NumVertices];
-//vec4   normals[NumVertices];
 
-// Vertices of a unit cube centered at origin, sides aligned with axes
-//point4 vertices[8] = {
-//    point4( -0.5, -0.5,  0.5, 1.0 ),
-//    point4( -0.5,  0.5,  0.5, 1.0 ),
-//    point4(  0.5,  0.5,  0.5, 1.0 ),
-//    point4(  0.5, -0.5,  0.5, 1.0 ),
-//    point4( -0.5, -0.5, -0.5, 1.0 ),
-//    point4( -0.5,  0.5, -0.5, 1.0 ),
-//    point4(  0.5,  0.5, -0.5, 1.0 ),
-//    point4(  0.5, -0.5, -0.5, 1.0 )
-//};
+std::vector<glm::vec4> vertices;
+std::vector<glm::vec4> normals;
 
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
+float eyex, eyey, eyez;
+float atx, aty, atz;
+float upx, upy, upz;
 
+char proj = 'P';
 
+float yfov, aspect, near, far, right, left, top, bottom;
+
+std::string scnfile = "";
+const char* filename = "";
+std::string oldfilename = "";
 
 //----------------------------------------------------------------------------
 
-// quad generates two triangles for each face and assigns colors
-//    to the vertices.  Notice we keep the relative ordering when constructing the tris
-//int Index = 0;
-//void
-//quad( int a, int b, int c, int d )
-//{
-//
-//
-//  vec4 u = vertices[b] - vertices[a];
-//  vec4 v = vertices[c] - vertices[b];
-//
-//  vec4 normal = normalize( cross(u, v) );
-//  normal[3] = 0.0;
-//
-//  normals[Index] = normal; points[Index] = vertices[a]; Index++;
-//  normals[Index] = normal; points[Index] = vertices[b]; Index++;
-//  normals[Index] = normal; points[Index] = vertices[c]; Index++;
-//  normals[Index] = normal; points[Index] = vertices[a]; Index++;
-//  normals[Index] = normal; points[Index] = vertices[c]; Index++;
-//  normals[Index] = normal; points[Index] = vertices[d]; Index++;
-//}
+void load(){
+    //open scn file
+    std::ifstream scn;
+    scn.open(scnfile);
+    if (scn.is_open()) {
+    
+        //read info
+        scn >> oldfilename >> eyex >> eyey >> eyez
+            >> atx >> aty >> atz
+            >> upx >> upy >> upz
+            >> proj;
+        
+        if(proj == 'P'){
+           scn >> yfov >> aspect >> near >> far;
+        }
+        else if (proj == 'O'){
+            scn >> left >> right >> bottom >> top >> near >> far;
+        }
+ 
+        //close file
+        scn.close();
+    }
+    
+    else std::cout << "Unable to open file";
+ 
+    
+    filename = oldfilename.c_str();
+}
 
-//----------------------------------------------------------------------------
-
-// generate 12 triangles: 36 vertices and 36 colors
-//void
-//colorcube()
-//{
-//  quad( 4, 5, 6, 7 );
-//  quad( 5, 4, 0, 1 );
-//  quad( 1, 0, 3, 2 );
-//  quad( 2, 3, 7, 6 );
-//  quad( 3, 0, 4, 7 );
-//  quad( 6, 5, 1, 2 );
-//}
 
 //----------------------------------------------------------------------------
 
@@ -87,9 +81,7 @@ std::vector<glm::vec3> normals;
 void
 init()
 {
-    bool res = loadOBJ("../sphere42NS.obj", vertices, normals);
-    //NumVertices = vertices.size();
-    //colorcube();
+    bool res = loadOBJ(filename, vertices, normals);
 
     // Create a vertex array object
     GLuint vao;
@@ -97,15 +89,11 @@ init()
     glBindVertexArray( vao );
 
     // Create and initialize a buffer object
-    GLuint buffer;
-    glGenBuffers( 1, &buffer );
-    glBindBuffer( GL_ARRAY_BUFFER, buffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(normals),
-		  NULL, GL_STATIC_DRAW );
-//    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(points), points );
-//    glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(normals), normals );
+    GLuint buffer[2];
+    glGenBuffers( 2, buffer );
+    glBindBuffer( GL_ARRAY_BUFFER, buffer[0]);
 
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec4), &vertices[0], GL_STATIC_DRAW);
     
     // Load shaders and use the resulting shader program
     GLuint program = InitShader( "vshader.glsl", "fshader.glsl" );
@@ -117,10 +105,14 @@ init()
     glVertexAttribPointer( vPosition, 4, GL_FLOAT, GL_FALSE, 0,
 			   BUFFER_OFFSET(0) );
 
+    glBindBuffer( GL_ARRAY_BUFFER, buffer[1]);
+    
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec4), &normals[0], GL_STATIC_DRAW);
+
     GLuint vNormal = glGetAttribLocation( program, "vNormal" );
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0,
-			   BUFFER_OFFSET(sizeof(vertices)) );
+			   BUFFER_OFFSET(0) );
 
 
     // Initialize shader lighting parameters
@@ -157,12 +149,21 @@ init()
     model_view = glGetUniformLocation( program, "ModelView" );
     projection = glGetUniformLocation( program, "Projection" );
 
+//---------------------------------------------------------------------------
 
+    mat4 p;
+    
+    if (proj == 'P') {
+        p = Perspective(yfov, aspect, near, far);
+    }
+    
+    else if (proj == 'O'){
+        p = Ortho(left, right, bottom, top, near, far);
+    }
 
-    mat4 p = Perspective(90.0, 1.0, 0.1, 4.0);
-    point4  eye( 0.0, 0.0, 2.0, 1.0);
-    point4  at( 0.0, 0.0, 0.0, 1.0 );
-    vec4    up( 0.0, 1.0, 0.0, 0.0 );
+    point4  eye( eyex, eyey, eyez, 1.0 );
+    point4  at( atx, aty, atz, 1.0 );
+    Angel::vec4    up( upx, upy, upz, 0.0 );
 
 
     mat4  mv = LookAt( eye, at, up );
@@ -204,6 +205,13 @@ keyboard( unsigned char key, int x, int y )
 
 int main(int argc, char** argv)
 {
+    //read in scn file
+    if(argc == 2){
+        scnfile = argv[1];
+    }
+    
+    load();
+    
     glutInit(&argc, argv);
 #ifdef __APPLE__
     glutInitDisplayMode(GLUT_3_2_CORE_PROFILE | GLUT_RGBA | GLUT_DEPTH);
