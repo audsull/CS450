@@ -338,7 +338,7 @@ display( void )
         
         if(i == 1) {
             glBindVertexArray( vao1 );
-            //glDrawArrays( GL_TRIANGLES, 0, vertices1.size() );
+            glDrawArrays( GL_TRIANGLES, 0, vertices1.size() );
         }
         if(i == 2) {
             glBindVertexArray( vao2 );
