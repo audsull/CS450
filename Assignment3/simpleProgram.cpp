@@ -42,10 +42,13 @@ float atx, aty, atz;
 float upx, upy, upz;
 
 char proj = 'O';
+int wireFlag = 1;
 
 float yfov, aspect, near, far, right, left, top, bottom;
 
 float startAR = (right-left)/(top-bottom);
+
+int currentHeight;
 
 std::string scnfile = "";
 const char* filename1 = "";
@@ -57,6 +60,7 @@ std::string oldfilename2 = "";
 std::string oldfilename3 = "";
 
 GLuint shaderProgram;
+GLuint program;
 
 //----------------------------------------------------------------------------
 
@@ -94,7 +98,7 @@ void load(){
 void myReshape(int w, int h){
     
     GLuint projectionLoc = glGetUniformLocation(shaderProgram , "Projection");
-    
+    currentHeight = h;
     mat4 p2;
     glViewport(0,0,w,h);
     
@@ -105,25 +109,21 @@ void myReshape(int w, int h){
             p2 = Ortho(left, right, left * (GLfloat) h / (GLfloat) w,
                        right * (GLfloat) h / (GLfloat) w, 0.1, 10.0);
         }
-        
         else if (proj == 'P'){
             p2 = Frustum(left, right, left * (GLfloat) h / (GLfloat) w,
                          right * (GLfloat) h / (GLfloat) w, 0.1, 10.0);
         }
-        
     }
-    else{ //wider
+    else { //wider
         if (proj == 'O') {
             p2 = Ortho(bottom * (GLfloat) w / (GLfloat) h,
                        top * (GLfloat) w / (GLfloat) h, bottom, top, 0.1, 10.0);
         }
-        
         else if (proj == 'P'){
             p2 = Frustum(bottom * (GLfloat) w / (GLfloat) h,
                          top * (GLfloat) w / (GLfloat) h, bottom, top, 0.1, 10.0);
         }
     }
-    
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &p2[0][0]);
 }
 
@@ -145,9 +145,10 @@ init()
     bool res3 = loadOBJ(filename3, vertices3, normals3);
 
     // Load shaders and use the resulting shader program
-    GLuint program = InitShader( "vshader.glsl", "fshader.glsl" );
+    program = InitShader( "vshader.glsl", "fshader.glsl" );
     glUseProgram( program );
     shaderProgram = program;
+    
     
     // Create a vertex array object
     glGenVertexArrays( 1, &vao1 );
@@ -168,6 +169,9 @@ init()
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
     
+    //"idColor"
+    
+    
     
     glGenVertexArrays( 1, &vao2 );
     glBindVertexArray( vao2 );
@@ -187,6 +191,10 @@ init()
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
     
+    
+    
+    
+    
     glGenVertexArrays( 1, &vao3 );
     glBindVertexArray( vao3 );
     
@@ -205,6 +213,9 @@ init()
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
 
+    
+    
+    
     // Initialize shader lighting parameters
     point4 light_position( 1.5, 1.5, 2.0, 1.0 );
     color4 light_ambient( 0.2, 0.2, 0.2, 1.0 );
@@ -264,48 +275,80 @@ init()
 }
 //----------------------------------------------------------------------------
 
-//
-//void myMouse(GLint button, GLint state, GLint x, GLint y) {
-//    //convert mouse coords to image plane coords
-//    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-//    {
-//        for (int i = 0; i < 3; i++)
-//        {
-//            int r = i + 25;
-//            int g = i + 30;
-//            int b = i + 40;
-//            
-//            color4 newcolor = { r, g, b, 1 };
-//            
-//            glBindVertexArray(vao[i]);
-//            GLuint idcolor = glGetUniformLocation(program, "idColor");
-//            glUniform4f(idcolor, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-//            glDrawArrays(GL_TRIANGLES, 0, ObjectsLoaded[i].ActualVertices);
-//        }
-//        
-//        GLubyte pixel[4];
-//        glReadPixels(x, currentHeight - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-//        
-//        int id = (pixel[0]-25) + (pixel[1] -30) + (pixel[2] -40);
-//        
-//        printf("selected object is: %d\n", id);
-//        printf("0:%u\n1:%u\n2:%u\n3:%u\n", pixel[0], pixel[1], pixel[2], pixel[3]);
-//    }
-//}
+
+void myMouse(GLint button, GLint state, int x, int y) {
+
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+    {
+        GLuint pickingColorID = glGetUniformLocation(program, "PickingColor");
+        int choiceInt = glGetUniformLocation(program, "choose");
+        glUniform1i(choiceInt, 1);
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (int i = 1; i <= 3; i++)
+        {
+            // Convert "i", the integer mesh ID, into an RGB color
+            int r = (i & 0x000000FF) >> 0;
+            int g = (i & 0x0000FF00) >> 8;
+            int b = (i & 0x00FF0000) >> 16;
+ 
+            if(i == 1){
+                glBindVertexArray(vao1);
+                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+                glDrawArrays(GL_TRIANGLES, 0, vertices1.size());
+            }
+            if(i == 2) {
+                glBindVertexArray(vao2);
+                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+                glDrawArrays(GL_TRIANGLES, 0, vertices2.size());
+            }
+            if(i == 3) {
+                glBindVertexArray(vao3);
+                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+                glDrawArrays(GL_TRIANGLES, 0, vertices3.size());
+            }
+        }
+        
+        GLubyte pixel[4];
+        glReadPixels(x, currentHeight - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        
+
+        printf("0:%u\n1:%u\n2:%u\n3:%u\n", pixel[0], pixel[1], pixel[2], pixel[3]);
+        wireFlag = pixel[0] + (pixel[1] * 256) + (pixel[2] * 256 * 256);
+        printf("Wireflag is %d\n", wireFlag);
+    }
+}
 
 void
 display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    glBindVertexArray( vao1 );
-    //glDrawArrays( GL_TRIANGLES, 0, vertices1.size() );
+    int choiceInt = glGetUniformLocation(program, "choose");
     
-    glBindVertexArray( vao2 );
-    glDrawArrays( GL_TRIANGLES, 0, vertices2.size() );
-    
-    glBindVertexArray( vao3 );
-    glDrawArrays( GL_TRIANGLES, 0, vertices3.size() );
+    for(int i = 1; i <= 3; i++) {
+        if(i == wireFlag) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glPolygonOffset(1.0, 2);
+        }
+        else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        glUniform1i(choiceInt, 0);
+        
+        if(i == 1) {
+            glBindVertexArray( vao1 );
+            //glDrawArrays( GL_TRIANGLES, 0, vertices1.size() );
+        }
+        if(i == 2) {
+            glBindVertexArray( vao2 );
+            glDrawArrays( GL_TRIANGLES, 0, vertices2.size() );
+        }
+        if(i == 3) {
+            glBindVertexArray( vao3 );
+            glDrawArrays( GL_TRIANGLES, 0, vertices3.size() );
+        }
+    }
     glutSwapBuffers();
 }
 
@@ -357,9 +400,9 @@ int main(int argc, char** argv)
 
     //NOTE:  callbacks must go after window is created!!!
     glutKeyboardFunc(keyboard);
-    //glutMouseFunc(myMouse);
     glutDisplayFunc(display);
     glutReshapeFunc(myReshape);
+    glutMouseFunc(myMouse);
     glutMainLoop();
 
     return(0);
