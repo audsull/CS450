@@ -29,6 +29,8 @@ GLuint  projection; // projection matrix uniform shader variable location
 
 GLuint vao1, vao2, vao3;
 
+GLuint vao[3];
+
 std::vector<glm::vec4> vertices1;
 std::vector<glm::vec4> vertices2;
 std::vector<glm::vec4> vertices3;
@@ -48,7 +50,8 @@ float yfov, aspect, near, far, right, left, top, bottom;
 
 float startAR = (right-left)/(top-bottom);
 
-int currentHeight;
+int wh = 512;
+int currentHeight = wh;
 
 std::string scnfile = "";
 const char* filename1 = "";
@@ -151,8 +154,8 @@ init()
     
     
     // Create a vertex array object
-    glGenVertexArrays( 1, &vao1 );
-    glBindVertexArray( vao1 );
+    glGenVertexArrays( 1, &vao[1] );
+    glBindVertexArray( vao[1] );
     
     glGenBuffers( 2, vbo1 );
     glBindBuffer( GL_ARRAY_BUFFER, vbo1[0]);
@@ -169,12 +172,9 @@ init()
     glEnableVertexAttribArray( vNormal );
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
     
-    //"idColor"
     
-    
-    
-    glGenVertexArrays( 1, &vao2 );
-    glBindVertexArray( vao2 );
+    glGenVertexArrays( 1, &vao[2] );
+    glBindVertexArray( vao[2] );
     
     glGenBuffers( 2, vbo2 );
     glBindBuffer( GL_ARRAY_BUFFER, vbo2[0]);
@@ -192,11 +192,8 @@ init()
     glVertexAttribPointer( vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
     
     
-    
-    
-    
-    glGenVertexArrays( 1, &vao3 );
-    glBindVertexArray( vao3 );
+    glGenVertexArrays( 1, &vao[3] );
+    glBindVertexArray( vao[3] );
     
     glGenBuffers( 2, vbo3 );
     glBindBuffer( GL_ARRAY_BUFFER, vbo3[0]);
@@ -278,45 +275,42 @@ init()
 
 void myMouse(GLint button, GLint state, int x, int y) {
 
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-    {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         GLuint pickingColorID = glGetUniformLocation(program, "PickingColor");
         int choiceInt = glGetUniformLocation(program, "choose");
         glUniform1i(choiceInt, 1);
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for (int i = 1; i <= 3; i++)
-        {
-            // Convert "i", the integer mesh ID, into an RGB color
+        
+        for (int i = 2; i <= 3; i++) {
             int r = (i & 0x000000FF) >> 0;
             int g = (i & 0x0000FF00) >> 8;
             int b = (i & 0x00FF0000) >> 16;
- 
+            
+            glBindVertexArray(vao[i]);
+            glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+            
             if(i == 1){
-                glBindVertexArray(vao1);
-                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
                 glDrawArrays(GL_TRIANGLES, 0, vertices1.size());
             }
             if(i == 2) {
-                glBindVertexArray(vao2);
-                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
                 glDrawArrays(GL_TRIANGLES, 0, vertices2.size());
             }
             if(i == 3) {
-                glBindVertexArray(vao3);
-                glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
                 glDrawArrays(GL_TRIANGLES, 0, vertices3.size());
             }
         }
         
         GLubyte pixel[4];
         glReadPixels(x, currentHeight - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-        
-
-        printf("0:%u\n1:%u\n2:%u\n3:%u\n", pixel[0], pixel[1], pixel[2], pixel[3]);
         wireFlag = pixel[0] + (pixel[1] * 256) + (pixel[2] * 256 * 256);
-        printf("Wireflag is %d\n", wireFlag);
+
+        printf("mouse: %d, %d\n", x, y);
+        printf("color: %d %d %d %d\n", pixel[0], pixel[1], pixel[2], pixel[3]);
+        printf("Wireflag is %d\n\n", wireFlag);
     }
+    glutSwapBuffers();
+
 }
 
 void
@@ -326,7 +320,7 @@ display( void )
 
     int choiceInt = glGetUniformLocation(program, "choose");
     
-    for(int i = 1; i <= 3; i++) {
+    for(int i = 2; i <= 3; i++) {
         if(i == wireFlag) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glPolygonOffset(1.0, 2);
@@ -334,18 +328,16 @@ display( void )
         else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
-        glUniform1i(choiceInt, 0);
         
+        glUniform1i(choiceInt, 0);
+        glBindVertexArray(vao[i]);
         if(i == 1) {
-            glBindVertexArray( vao1 );
             glDrawArrays( GL_TRIANGLES, 0, vertices1.size() );
         }
         if(i == 2) {
-            glBindVertexArray( vao2 );
             glDrawArrays( GL_TRIANGLES, 0, vertices2.size() );
         }
         if(i == 3) {
-            glBindVertexArray( vao3 );
             glDrawArrays( GL_TRIANGLES, 0, vertices3.size() );
         }
     }
