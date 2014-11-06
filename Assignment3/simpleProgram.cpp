@@ -27,8 +27,6 @@ typedef Angel::vec4  point4;
 GLuint  model_view;  // model-view matrix uniform shader variable location
 GLuint  projection; // projection matrix uniform shader variable location
 
-GLuint vao1, vao2, vao3;
-
 GLuint vao[3];
 
 std::vector<glm::vec4> vertices1;
@@ -152,6 +150,8 @@ init()
     glUseProgram( program );
     shaderProgram = program;
     
+    int choiceInt = glGetUniformLocation(program, "choose");
+    glUniform1i(choiceInt, 0);
     
     // Create a vertex array object
     glGenVertexArrays( 1, &vao[1] );
@@ -274,7 +274,6 @@ init()
 
 
 void myMouse(GLint button, GLint state, int x, int y) {
-
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         GLuint pickingColorID = glGetUniformLocation(program, "PickingColor");
         int choiceInt = glGetUniformLocation(program, "choose");
@@ -286,6 +285,7 @@ void myMouse(GLint button, GLint state, int x, int y) {
             int r = (i & 0x000000FF) >> 0;
             int g = (i & 0x0000FF00) >> 8;
             int b = (i & 0x00FF0000) >> 16;
+            
             
             glBindVertexArray(vao[i]);
             glUniform4f(pickingColorID, r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
@@ -307,10 +307,11 @@ void myMouse(GLint button, GLint state, int x, int y) {
 
         printf("mouse: %d, %d\n", x, y);
         printf("color: %d %d %d %d\n", pixel[0], pixel[1], pixel[2], pixel[3]);
-        printf("Wireflag is %d\n\n", wireFlag);
+        printf("Wireflag: %d\n\n", wireFlag);
+        
+        
     }
-    glutSwapBuffers();
-
+    //glutSwapBuffers();
 }
 
 void
@@ -321,7 +322,7 @@ display( void )
     int choiceInt = glGetUniformLocation(program, "choose");
     
     for(int i = 2; i <= 3; i++) {
-        if(i == wireFlag) {
+        if(wireFlag == i) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glPolygonOffset(1.0, 2);
         }
@@ -340,6 +341,7 @@ display( void )
         if(i == 3) {
             glDrawArrays( GL_TRIANGLES, 0, vertices3.size() );
         }
+        
     }
     glutSwapBuffers();
 }
@@ -392,9 +394,10 @@ int main(int argc, char** argv)
 
     //NOTE:  callbacks must go after window is created!!!
     glutKeyboardFunc(keyboard);
-    glutDisplayFunc(display);
     glutReshapeFunc(myReshape);
     glutMouseFunc(myMouse);
+    glutDisplayFunc(display);
+
     glutMainLoop();
 
     return(0);
